@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sorteador de orden por nombres</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7ff;
+      --card: #ffffff;
+      --primary: #3b5bdb;
+      --primary-dark: #2f4cc0;
+      --muted: #6b7280;
+      --border: #dbe2ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at 30% 20%, #e9efff, var(--bg));
+      color: #111827;
+      padding: 24px;
+    }
+
+    .app {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(59, 91, 219, 0.14);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, var(--primary), #5f79ff);
+      color: #fff;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      opacity: 0.95;
+      font-size: 0.95rem;
+    }
+
+    .content {
+      display: grid;
+      gap: 20px;
+      padding: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 820px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      border-radius: 12px;
+      border: 1px solid #c9d5ff;
+      padding: 12px;
+      font: inherit;
+      line-height: 1.5;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .primary:hover { background: var(--primary-dark); }
+
+    .secondary {
+      background: #eef2ff;
+      color: #1f2937;
+    }
+
+    .secondary:hover { background: #dde5ff; }
+
+    .result {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fafbff;
+      min-height: 220px;
+      padding: 12px;
+      overflow: auto;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 24px;
+    }
+
+    li {
+      padding: 6px 0;
+      border-bottom: 1px solid #e6ebff;
+    }
+
+    li:last-child { border-bottom: 0; }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .embed {
+      padding: 0 24px 24px;
+    }
+
+    code {
+      display: block;
+      margin-top: 8px;
+      white-space: pre-wrap;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Sorteador de orden entre nombres</h1>
+      <p>Pega o escribe un nombre por línea y pulsa “Sortear orden”.</p>
+    </header>
+
+    <section class="content">
+      <div class="grid">
+        <div>
+          <label for="names">Nombres (uno por línea)</label>
+          <textarea id="names" placeholder="Ana&#10;Pedro&#10;Lucía&#10;Sergio"></textarea>
+          <div class="buttons">
+            <button id="draw" class="primary">Sortear orden</button>
+            <button id="reset" class="secondary">Limpiar</button>
+            <button id="copy" class="secondary">Copiar resultado</button>
+          </div>
+          <p class="hint">Se ignoran líneas vacías y se permiten nombres repetidos.</p>
+        </div>
+
+        <div>
+          <label>Resultado</label>
+          <div class="result" id="result">
+            <p class="hint">Aquí aparecerá el orden aleatorio.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="embed">
+      <p class="hint"><strong>Para insertarlo en una web:</strong> sube este archivo y embébelo con iframe.</p>
+      <code>&lt;iframe src="/sorteador-nombres.html" width="100%" height="650" style="border:0" loading="lazy"&gt;&lt;/iframe&gt;</code>
+    </section>
+  </main>
+
+  <script>
+    const namesInput = document.getElementById('names');
+    const drawButton = document.getElementById('draw');
+    const resetButton = document.getElementById('reset');
+    const copyButton = document.getElementById('copy');
+    const result = document.getElementById('result');
+
+    function parseNames(raw) {
+      return raw
+        .split('\n')
+        .map(name => name.trim())
+        .filter(Boolean);
+    }
+
+    function shuffle(items) {
+      const array = [...items];
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function renderList(items) {
+      if (!items.length) {
+        result.innerHTML = '<p class="hint">Añade al menos un nombre para sortear.</p>';
+        return;
+      }
+
+      const ordered = shuffle(items);
+      result.innerHTML = `<ol>${ordered.map(name => `<li>${name}</li>`).join('')}</ol>`;
+    }
+
+    drawButton.addEventListener('click', () => {
+      renderList(parseNames(namesInput.value));
+    });
+
+    resetButton.addEventListener('click', () => {
+      namesInput.value = '';
+      result.innerHTML = '<p class="hint">Aquí aparecerá el orden aleatorio.</p>';
+    });
+
+    copyButton.addEventListener('click', async () => {
+      const names = Array.from(result.querySelectorAll('li')).map(li => li.textContent);
+      if (!names.length) return;
+
+      const text = names.map((name, index) => `${index + 1}. ${name}`).join('\n');
+      try {
+        await navigator.clipboard.writeText(text);
+        copyButton.textContent = '¡Copiado!';
+        setTimeout(() => (copyButton.textContent = 'Copiar resultado'), 1200);
+      } catch {
+        copyButton.textContent = 'No se pudo copiar';
+        setTimeout(() => (copyButton.textContent = 'Copiar resultado'), 1200);
+      }
+    });
+  </script>
+</body>
+</html>
