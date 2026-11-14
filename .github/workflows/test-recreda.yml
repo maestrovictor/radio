@@ -1,0 +1,25 @@
+name: Verificar RecREdA
+on:
+  push:
+    branches:
+      - feat/recreda-03-design-wav
+    paths:
+      - 'RecREdA/**'
+      - '.github/workflows/test-recreda.yml'
+  pull_request:
+    paths:
+      - 'RecREdA/**'
+      - '.github/workflows/test-recreda.yml'
+permissions:
+  contents: read
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pruebas de HTML y WAV
+        run: node RecREdA/tests/smoke.test.js
