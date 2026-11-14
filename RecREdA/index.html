@@ -113,7 +113,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{
 .tag{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:1.6px}
 audio{width:100%;margin-top:12px;min-height:45px}
 .download-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.download-actions .button{font-size:12px}
+.download-actions .button{font-size:12px;min-height:48px}#drive-feedback a{color:var(--accent);font-weight:750}
 .notice{color:#b8c5d5;line-height:1.55;font-size:12px;margin:15px 0 0}
 .notice strong{color:#f0f4f6}
 .scripts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
@@ -147,8 +147,8 @@ audio{width:100%;margin-top:12px;min-height:45px}
  <div class="fader"><div class="fader-head"><label for="pad-volume">🎵 Música y efectos</label><span id="pad-percent" class="small">70%</span></div><input id="pad-volume" class="range" type="range" min="0" max="100" value="70"></div>
  <div class="recordbar"><div><div class="small">Tiempo de grabación</div><div class="timer" id="timer">00:00</div></div><div class="row"><button id="record" class="button danger">● Grabar</button><button id="stop-record" class="button" disabled>■ Parar</button></div></div>
  <div class="row" style="margin-bottom:14px"><button id="mark" class="button" disabled>⚑ Añadir marcador</button><span class="small">Señala entrevistas, noticias y secciones</span></div><div id="alert" role="status" aria-live="polite"></div>
- <div id="record-result" hidden><div class="tag">TU PROGRAMA ESTÁ LISTO</div><audio id="playback" controls></audio><div class="download-actions"><button id="download-wav" class="button primary" type="button">↓ Descargar WAV</button><a id="download" class="button" download="RecREdA-grabacion.webm">↓ Archivo original</a></div><p class="notice">WAV es compatible con la mayoría de editores; ocupa más espacio. El archivo original está comprimido y conserva la calidad de la grabación.</p></div>
- <div class="notice">La grabación mezcla el micrófono y los efectos en el navegador. Solo se guarda en tu dispositivo al descargarla. Para el micrófono usa HTTPS o localhost.</div>
+ <div id="record-result" hidden><div class="tag">TU PROGRAMA ESTÁ LISTO</div><audio id="playback" controls></audio><div class="download-actions"><button id="download-mp3" class="button primary" type="button">↓ Descargar MP3</button><button id="drive-mp3" class="button" type="button">☁ Guardar MP3 en Drive</button><button id="download-wav" class="button" type="button">↓ Descargar WAV</button><a id="download" class="button" download="RecREdA-grabacion.webm">↓ Archivo original</a></div><p class="notice">Tú eliges: descarga local o guarda una copia privada en tu Google Drive, cuando autorices tu cuenta. El WAV es más pesado; el MP3 está comprimido.</p><p id="drive-feedback" class="notice" aria-live="polite"></p></div>
+ <div class="notice">La grabación mezcla el micrófono y los efectos en tu navegador. Solo se sube a Google Drive si eliges esa opción y autorizas el acceso. Para usar el micrófono se necesita HTTPS o localhost.</div>
 </aside>
 <div class="scripts">
 <section class="panel"><div class="heading"><div><div class="eyebrow">Producción</div><h2>Guion radiofónico</h2></div><button class="button" id="download-script">↓ Descargar guion</button></div><textarea class="scriptarea" id="script" aria-label="Guion radiofónico" spellcheck="true" placeholder="Escribe aquí tu guion...">🎙 RECREDA — MI PROGRAMA
@@ -166,8 +166,10 @@ TODOS: ¡Hasta el próximo programa!</textarea><p class="notice">El guion se gua
 <section class="panel"><div class="heading"><div><div class="eyebrow">Control de la sesión</div><h2>Registro de grabación</h2></div><button class="button" id="download-log" disabled>↓ Descargar registro</button></div><ol id="log-list" class="log-list" aria-live="polite"><li>Los eventos aparecerán aquí durante la grabación.</li></ol><p class="notice">Los marcadores permiten identificar momentos para una edición posterior.</p></section>
 <section class="panel"><div class="eyebrow">Cómo empezar</div><h2>Tu primer programa, en cuatro pasos</h2><p>1. Activa el micrófono y acepta el permiso del navegador.</p><p>2. Ajusta el volumen de voz, música y efectos.</p><p>3. Pulsa <strong>Grabar</strong>, habla y lanza sonidos con las tarjetas.</p><p>4. Pulsa <strong>Parar</strong> y descarga el programa.</p><p class="notice"><strong>Privacidad educativa:</strong> RecREdA no envía ni sube grabaciones a un servidor. Antes de publicar voces del alumnado, comprueba las autorizaciones pertinentes.</p></section>
 </div>
-</div><footer class="footer">RecREdA · Una herramienta abierta para crear, aprender y compartir radio escolar · Versión 0.3</footer>
+</div><footer class="footer">RecREdA · Una herramienta abierta para crear, aprender y compartir radio escolar · Versión 0.4</footer>
 </div>
+<script src="./config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
@@ -176,7 +178,7 @@ const names=[
 ['Suspense','🎭','purple'],['Transición','✨','orange'],['Cuenta atrás','⏱','teal'],['Despedida','👋','purple'],
 ['Sintonía noticias','🎼','teal'],['Fondo tranquilo','🎹','purple'],['Entrada alegre','🎺','orange'],['Misterio','🌒','purple'],
 ['Tecnología','🛰','teal'],['Deportes','🏅','orange'],['Entrevista','🎤','purple'],['Cierre musical','🎶','teal']];
-let ctx, micStream, micSource, micGain, padGain, destination, analyser, recorder, chunks=[], startedAt=0, timerHandle, lastUrl=null, uploadIndex=null, micMuted=false, latestRecording=null, wavUrl=null;
+let ctx, micStream, micSource, micGain, padGain, destination, analyser, recorder, chunks=[], startedAt=0, timerHandle, lastUrl=null, uploadIndex=null, micMuted=false, latestRecording=null, wavUrl=null, mp3Cache=null, mp3Promise=null;
 const files=Array(16).fill(null), activeSounds=new Set(), musicInstances=new Map();
 let logEntries=[];
 names.forEach((p,i)=>{const wrap=document.createElement('div');wrap.style.minWidth='0';const btn=document.createElement('button');btn.type='button';btn.className='pad';btn.dataset.color=p[2];btn.setAttribute('aria-label',(i<8?'Efecto ':'Música ')+(i<8?String.fromCharCode(65+i):(i-7))+': '+p[0]);btn.innerHTML='<span class="key">'+(i<8?'EFECTO '+String.fromCharCode(65+i):'MÚSICA '+(i-7))+'</span><span class="symbol">'+p[1]+'</span><span class="title"></span>';btn.querySelector('.title').textContent=p[0];btn.addEventListener('click',()=>playPad(i,btn));const change=document.createElement('button');change.className='button';change.style.cssText='width:100%;margin-top:6px;padding:6px;font-size:12px';change.textContent='Cambiar audio';change.setAttribute('aria-label','Cambiar audio de '+p[0]);change.addEventListener('click',()=>{uploadIndex=i;$('audio-upload').click()});wrap.append(btn,change);$(i<8?'pads-effects':'pads-music').append(wrap)});
@@ -214,7 +216,7 @@ $('audio-upload').addEventListener('change',async e=>{const f=e.target.files?.[0
 $('stop-sounds').addEventListener('click',()=>{for(const s of [...activeSounds])try{s.stop()}catch(e){}activeSounds.clear();musicInstances.clear();logEvent('Detener sonidos');document.querySelectorAll('.pad').forEach(x=>{x.classList.remove('playing');x.setAttribute('aria-pressed','false')})});
 function startMeter(){const data=new Uint8Array(analyser.frequencyBinCount);function draw(){if(!ctx)return;analyser.getByteTimeDomainData(data);let s=0;for(const v of data){const n=(v-128)/128;s+=n*n}const level=Math.min(100,Math.sqrt(s/data.length)*240);$('mic-meter').style.width=level+'%';[...$('visualizer').children].forEach((el,i)=>el.style.height=(5+Math.min(30,level*(.2+Math.random()*.55)))+'px');requestAnimationFrame(draw)}draw()}
 function formatTime(sec){const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
-$('record').addEventListener('click',async()=>{try{await initAudio();if(!window.MediaRecorder)throw Error('Este navegador no admite MediaRecorder');const types=['audio/webm;codecs=opus','audio/webm','audio/mp4'];const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';chunks=[];recorder=new MediaRecorder(destination.stream,mime?{mimeType:mime}:undefined);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onerror=()=>message('Error durante la grabación.');recorder.onstop=()=>{const type=recorder.mimeType||'audio/webm',ext=type.includes('mp4')?'m4a':'webm',blob=new Blob(chunks,{type});latestRecording=blob;if(lastUrl)URL.revokeObjectURL(lastUrl);if(wavUrl){URL.revokeObjectURL(wavUrl);wavUrl=null}lastUrl=URL.createObjectURL(blob);$('playback').src=lastUrl;$('download').href=lastUrl;$('download').download='RecREdA-'+new Date().toISOString().slice(0,10)+'.'+ext;$('download-wav').disabled=false;$('download-wav').textContent='↓ Descargar WAV';$('record-result').hidden=false;message('Grabación lista. Puedes descargarla como WAV o en su formato original.')};recorder.start(1000);startedAt=Date.now();logEntries=[];logEvent('Inicio de grabación');$('mark').disabled=false;timerHandle=setInterval(()=>$('timer').textContent=formatTime(Math.floor((Date.now()-startedAt)/1000)),250);$('record').disabled=true;$('stop-record').disabled=false;document.body.classList.add('recording');$('status-label').textContent='Grabando programa';message('Grabando... Los sonidos también se incluyen en el archivo.')}catch(e){message('No se pudo iniciar la grabación: '+e.message)}});
+$('record').addEventListener('click',async()=>{try{await initAudio();if(!window.MediaRecorder)throw Error('Este navegador no admite MediaRecorder');const types=['audio/webm;codecs=opus','audio/webm','audio/mp4'];const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';chunks=[];recorder=new MediaRecorder(destination.stream,mime?{mimeType:mime}:undefined);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onerror=()=>message('Error durante la grabación.');recorder.onstop=()=>{const type=recorder.mimeType||'audio/webm',ext=type.includes('mp4')?'m4a':'webm',blob=new Blob(chunks,{type});latestRecording=blob;mp3Cache=null;mp3Promise=null;$('drive-feedback').textContent='';if(lastUrl)URL.revokeObjectURL(lastUrl);if(wavUrl){URL.revokeObjectURL(wavUrl);wavUrl=null}lastUrl=URL.createObjectURL(blob);$('playback').src=lastUrl;$('download').href=lastUrl;$('download').download='RecREdA-'+new Date().toISOString().slice(0,10)+'.'+ext;$('download-wav').disabled=false;$('download-wav').textContent='↓ Descargar WAV';$('download-mp3').disabled=false;$('drive-mp3').disabled=false;$('record-result').hidden=false;message('Grabación lista. Puedes descargarla como WAV o en su formato original.')};recorder.start(1000);startedAt=Date.now();logEntries=[];logEvent('Inicio de grabación');$('mark').disabled=false;timerHandle=setInterval(()=>$('timer').textContent=formatTime(Math.floor((Date.now()-startedAt)/1000)),250);$('record').disabled=true;$('stop-record').disabled=false;document.body.classList.add('recording');$('status-label').textContent='Grabando programa';message('Grabando... Los sonidos también se incluyen en el archivo.')}catch(e){message('No se pudo iniciar la grabación: '+e.message)}});
 // WAV PCM de 16 bits: conversión local sin servicios de terceros.
 function wavFromAudioBuffer(buffer){
   const channels=Math.min(buffer.numberOfChannels,2),rate=buffer.sampleRate,frames=buffer.length;
@@ -234,6 +236,125 @@ function wavFromAudioBuffer(buffer){
   }
   return new Blob([out],{type:'audio/wav'});
 }
+
+// The MP3 encoder runs in a worker, keeping the controls responsive.
+async function getMp3(){
+  if(mp3Cache)return mp3Cache;
+  if(mp3Promise)return mp3Promise;
+  if(!latestRecording)throw new Error('Primero debes grabar un programa.');
+  const source=latestRecording;
+  mp3Promise=(async()=>{
+    await initAudio();
+    const decoded=await ctx.decodeAudioData(await source.arrayBuffer());
+    if(source!==latestRecording)throw new Error('La grabación ha cambiado.');
+    const channels=Math.min(2,decoded.numberOfChannels);
+    const a=decoded.getChannelData(0).slice();
+    const b=channels===2?decoded.getChannelData(1).slice():null;
+    const worker=new Worker(new URL('./mp3-worker.js',document.baseURI));
+    try {
+      return await new Promise((resolve,reject)=>{
+        worker.onmessage=event=>{
+          const result=event.data;
+          if(result.action==='progress')message('Preparando MP3: '+result.value+' %');
+          if(result.action==='error')reject(new Error(result.message));
+          if(result.action==='done')resolve(result.blob);
+        };
+        worker.onerror=()=>reject(new Error('No se pudo ejecutar el codificador MP3.'));
+        const msg={action:'encode',sampleRate:decoded.sampleRate,channels,bitrate:128,left:a.buffer};
+        const buffers=[a.buffer];
+        if(b){msg.right=b.buffer;buffers.push(b.buffer)}
+        worker.postMessage(msg,buffers);
+      });
+    }finally{worker.terminate()}
+  })();
+  try{
+    const result=await mp3Promise;
+    if(latestRecording===source)mp3Cache=result;
+    return result;
+  }finally{mp3Promise=null}
+}
+function downloadBlob(blob,filename){
+  const href=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=href;link.download=filename;document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(href),60000);
+}
+const mp3Filename=()=> 'RecREdA-'+new Date().toISOString().slice(0,10)+'.mp3';
+$('download-mp3').addEventListener('click',async()=>{
+  const button=$('download-mp3');
+  button.disabled=true;button.textContent='Preparando MP3…';
+  try{const blob=await getMp3();downloadBlob(blob,mp3Filename());message('MP3 descargado. Tu grabación sigue disponible para guardarla también en Drive.')}
+  catch(err){message('No se pudo generar el MP3: '+err.message)}
+  finally{button.disabled=false;button.textContent='↓ Descargar MP3'}
+});
+// User-controlled, limited-permission Drive upload. No access token is persisted.
+function authorizeDrive(clientId){
+  return new Promise((resolve,reject)=>{
+    if(!window.google?.accounts?.oauth2){
+      reject(new Error('Google todavía no está disponible. Revisa tu conexión y vuelve a pulsar.'));
+      return;
+    }
+    const tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:clientId,
+      scope:'https://www.googleapis.com/auth/drive.file',
+      callback:response=>{
+        if(response.error)reject(new Error(response.error_description||response.error));
+        else if(!response.access_token)reject(new Error('Google no devolvió autorización.'));
+        else resolve(response.access_token);
+      },
+      error_callback:e=>reject(new Error(e.message||e.type||'No se completó la autorización de Google.'))
+    });
+    tokenClient.requestAccessToken({prompt:'consent'});
+  });
+}
+async function uploadDriveMp3(blob,name,token){
+  // Resumable upload supports radio programmes that exceed 5 MB.
+  const initial=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,webViewLink',{
+    method:'POST',
+    headers:{
+      Authorization:'Bearer '+token,
+      'Content-Type':'application/json; charset=UTF-8',
+      'X-Upload-Content-Type':'audio/mpeg',
+      'X-Upload-Content-Length':String(blob.size)
+    },
+    body:JSON.stringify({name,mimeType:'audio/mpeg'})
+  });
+  if(!initial.ok)throw new Error('Drive no pudo iniciar la subida (HTTP '+initial.status+').');
+  const session=initial.headers.get('Location');
+  if(!session)throw new Error('Drive no devolvió una sesión de subida.');
+  const result=await fetch(session,{
+    method:'PUT',
+    headers:{'Content-Type':'audio/mpeg','Content-Length':String(blob.size)},
+    body:blob
+  });
+  if(!result.ok)throw new Error('No se completó la subida a Drive (HTTP '+result.status+').');
+  return result.json();
+}
+$('drive-mp3').addEventListener('click',async()=>{
+  const button=$('drive-mp3'),clientId=String(window.RECREDA_GOOGLE_CLIENT_ID||'').trim();
+  if(!clientId){
+    $('drive-feedback').textContent='La conexión a Google Drive necesita configurar el ID público de OAuth. Consulta GOOGLE_DRIVE.md.';
+    return;
+  }
+  // Request authorization on the click itself to avoid browser popup blockers.
+  let tokenPromise;
+  try{tokenPromise=authorizeDrive(clientId)}catch(err){message(err.message);return}
+  button.disabled=true;button.textContent='Guardando en Drive…';
+  try{
+    const [token,blob]=await Promise.all([tokenPromise,getMp3()]);
+    $('drive-feedback').textContent='Subiendo archivo privado a tu Google Drive…';
+    const uploaded=await uploadDriveMp3(blob,mp3Filename(),token);
+    if(!uploaded.id)throw new Error('La respuesta de Drive no incluye identificador.');
+    const link=document.createElement('a');
+    link.href='https://drive.google.com/file/d/'+encodeURIComponent(uploaded.id)+'/view';
+    link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir archivo en tu Google Drive';
+    $('drive-feedback').replaceChildren(document.createTextNode('MP3 guardado en tu Drive. '),link);
+    message('Archivo MP3 guardado en Drive correctamente. No se ha compartido públicamente.');
+  }catch(err){
+    $('drive-feedback').textContent='No se ha confirmado la subida. '+err.message+' Puedes descargar el MP3 localmente.';
+    message('No se pudo guardar en Drive: '+err.message);
+  }finally{button.disabled=false;button.textContent='☁ Guardar MP3 en Drive'}
+});
+
 $('download-wav').addEventListener('click',async()=>{
   if(!latestRecording)return;
   const button=$('download-wav');
