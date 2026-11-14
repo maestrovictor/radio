@@ -323,7 +323,7 @@ async function uploadDriveMp3(blob,name,token){
   if(!session)throw new Error('Drive no devolvió una sesión de subida.');
   const result=await fetch(session,{
     method:'PUT',
-    headers:{'Content-Type':'audio/mpeg','Content-Length':String(blob.size)},
+    headers:{'Content-Type':'audio/mpeg'},
     body:blob
   });
   if(!result.ok)throw new Error('No se completó la subida a Drive (HTTP '+result.status+').');
