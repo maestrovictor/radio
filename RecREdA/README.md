@@ -1,48 +1,56 @@
 # RecREdA 🎙️
 
-**Estudio de radio escolar en el navegador**. Proyecto original e independiente orientado a la comunidad educativa y la Red de Radios Escolares de Andalucía (REdA).
+**Estudio de radio escolar en el navegador**. Proyecto original e independiente orientado a la comunidad educativa y a la Red de Radios Escolares de Andalucía (REdA).
 
-## Versión 0.2
+## Versión 0.3 (en pruebas)
 
-- **Banco A — efectos**: 8 pads (teclas A–H).
-- **Banco B — música**: 8 pads (teclas 1–8), cada uno se puede volver a pulsar para detener la reproducción.
-- Efectos y sintonías de demostración sintetizados en el navegador; cada pad puede cargar un archivo de audio personal (MP3, WAV u otros formatos compatibles con el navegador).
-- Captura de **un micrófono**, con controles de volumen, nivel de entrada y silencio/activación rápida (tecla M).
-- Grabación de la mezcla local del micrófono y la botonera con MediaRecorder, reproducción y descarga en WebM/Opus o M4A según compatibilidad.
-- **Registro de sesión** con inicio, fin, sonidos reproducidos, micrófono silenciado y marcadores (botón o tecla T), exportable a TXT.
-- Guion radiofónico editable, guardado automáticamente en localStorage y exportable a TXT.
-- Diseño adaptable a ordenador y tableta.
+- **Nueva interfaz** de cabina, con indicador de grabación, pads diferenciados por color y controles accesibles en ordenador y móvil.
+- **Descarga WAV (PCM 16 bits)** generada localmente en el navegador desde la grabación. Ideal para editar en Audacity u otros programas. **Importante:** ocupa bastante más espacio que WebM/M4A.
+- Descarga alternativa del archivo original (generalmente WebM/Opus en Firefox/Chrome o M4A en Safari, dependiendo del navegador).
+- Banco A: 8 efectos (teclas A–H); Banco B: 8 sintonías sintetizadas (teclas 1–8), reemplazables por archivos locales.
+- Micrófono con control de ganancia, medidor y botón para silenciar/restaurar la voz (M).
+- Grabación local de la mezcla de micrófono y sonidos.
+- Marcadores de sesión (T), registro descargable y guion editable que se conserva localmente.
 
-## Cómo ejecutar
+## Cómo probarla
 
-No utiliza dependencias externas. Servir el archivo con un servidor local o un alojamiento **HTTPS**:
+Abrir `index.html` mediante un servidor local o alojamiento HTTPS.
 
 ```sh
 python3 -m http.server 8000
-# Abrir http://localhost:8000/RecREdA/
+# http://localhost:8000/RecREdA/
 ```
 
-Para usar GitHub Pages, consultar [PUBLICACION.md](./PUBLICACION.md).
+Para comprobar la lógica básica sin navegador:
 
-## Limitaciones de esta primera versión
+```sh
+node RecREdA/tests/smoke.test.js
+```
 
-- Hay un único micrófono. Las interfaces de audio USB con varias voces mezcladas por hardware (como una mesa de mezclas con salida USB) pueden utilizarse si el sistema las reconoce como un dispositivo de entrada.
-- No existe edición multipista ni exportación MP3 integrada.
-- Los archivos cargados en los bancos no persisten tras cerrar o recargar la página; el guion sí se conserva localmente en el mismo navegador.
-- Las melodías de demostración son **breves composiciones sintetizadas**; no son una biblioteca de música libre de terceros.
-- Si cierras la página sin descargar la grabación, puede perderse. Hay una advertencia de salida durante la grabación, pero los navegadores móviles no siempre la muestran.
-- Se ha pasado una validación de sintaxis y una **prueba automatizada con APIs simuladas** (16 pads, micrófono, inicio/fin, marcadores y descarga). Todavía falta validar dispositivos y audio real en Chrome/Edge/Firefox/Safari.
+Consultar [PRUEBAS.md](./PRUEBAS.md) para las pruebas de audio con micrófono real.
 
-## Privacidad y uso educativo
+## Privacidad
 
-La grabación y reproducción se procesan localmente. Esta versión no sube los audios a ningún servidor ni solicita iniciar sesión. El alojamiento web puede registrar datos de acceso habituales; evita publicar archivos de audio del alumnado sin autorización y verifica los derechos de músicas externas.
+No hay servicio de almacenamiento ni autenticación. Los audios se procesan localmente. El navegador solicita permiso para el micrófono. El guion se guarda en localStorage del propio navegador.
 
-Proyecto de desarrollo no oficial: su incorporación a REdA requerirá revisión y validación.
+## Formatos
 
-## Próximas versiones
+| Formato | Uso | Características |
+| --- | --- | --- |
+| WAV 16 bits | Edición y archivos maestros | Compatible con editores, **grande** |
+| WebM/Opus | Versión comprimida en Chrome/Firefox | Ligera, no todos los reproductores antiguos lo abren |
+| M4A | Versión comprimida en algunos navegadores | Depende de MediaRecorder |
 
-1. Selección de dispositivo de entrada, prueba de nivel y mejores avisos de fallo de micrófono.
-2. Fondo musical en bucle, auto-ducking de voz y control de ganancia.
-3. Banco de efectos persistente mediante IndexedDB.
-4. Grabaciones multipista, edición y exportación WAV/MP3.
-5. Plantillas de programas, proyectos compartidos y accesibilidad avanzada.
+**MP3 todavía no se genera dentro de RecREdA**: requerirá integrar y probar un codificador propio en el navegador, sin enviar el audio del alumnado a servicios externos.
+
+La conversión WAV usa `AudioContext.decodeAudioData`. Si un navegador no puede decodificar su propia grabación, se mostrará un aviso y se podrá descargar el archivo original. Para grabaciones muy largas, WAV puede consumir mucha memoria y espacio.
+
+## Limitaciones
+
+- Una sola entrada de micrófono reconocida por el sistema (puede ser una mesa con varias voces premezcladas por USB).
+- Aún no se incluyen pistas independientes, edición, auto-ducking ni publicación.
+- Los archivos cargados en pads no persisten entre sesiones; guion sí.
+- Descargar la grabación antes de cerrar la página.
+- El código está sujeto a pruebas con micrófonos reales, Firefox, Chrome, Safari y tabletas.
+
+[Guía de publicación](./PUBLICACION.md) · [Lista de pruebas](./PRUEBAS.md).
