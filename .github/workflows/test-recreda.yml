@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feat/recreda-03-design-wav
+      - feat/recreda-mp3-drive
     paths:
       - 'RecREdA/**'
       - '.github/workflows/test-recreda.yml'
@@ -21,5 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Pruebas de HTML y WAV
-        run: node RecREdA/tests/smoke.test.js
+      - name: Pruebas de HTML, WAV y MP3
+        run: |
+          node RecREdA/tests/smoke.test.js
+          node RecREdA/tests/mp3.test.js
