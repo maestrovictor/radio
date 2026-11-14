@@ -237,6 +237,26 @@ function wavFromAudioBuffer(buffer){
   return new Blob([out],{type:'audio/wav'});
 }
 
+$('download-wav').addEventListener('click',async()=>{
+  if(!latestRecording)return;
+  const button=$('download-wav');
+  button.disabled=true;button.textContent='Preparando WAV…';
+  try{
+    await initAudio();
+    // Safari usa MP4/M4A y Firefox/Chromium suelen usar WebM/Opus.
+    // Se decodifica el archivo con el mismo motor de audio del navegador.
+    const buffer=await ctx.decodeAudioData(await latestRecording.arrayBuffer());
+    const wav=wavFromAudioBuffer(buffer);
+    if(wavUrl)URL.revokeObjectURL(wavUrl);
+    wavUrl=URL.createObjectURL(wav);
+    const link=document.createElement('a');
+    link.href=wavUrl;link.download='RecREdA-'+new Date().toISOString().slice(0,10)+'.wav';
+    document.body.appendChild(link);link.click();link.remove();
+    message('WAV descargado: PCM de 16 bits. Para compartir por internet, el formato original ocupa menos.');
+  }catch(err){
+    message('Este navegador no pudo convertir la grabación a WAV. Descarga el archivo original y ábrelo con Audacity. '+err.message);
+  }finally{button.disabled=false;button.textContent='↓ Descargar WAV'}
+});
 // The MP3 encoder runs in a worker, keeping the controls responsive.
 async function getMp3(){
   if(mp3Cache)return mp3Cache;
@@ -355,26 +375,7 @@ $('drive-mp3').addEventListener('click',async()=>{
   }finally{button.disabled=false;button.textContent='☁ Guardar MP3 en Drive'}
 });
 
-$('download-wav').addEventListener('click',async()=>{
-  if(!latestRecording)return;
-  const button=$('download-wav');
-  button.disabled=true;button.textContent='Preparando WAV…';
-  try{
-    await initAudio();
-    // Safari usa MP4/M4A y Firefox/Chromium suelen usar WebM/Opus.
-    // Se decodifica el archivo con el mismo motor de audio del navegador.
-    const buffer=await ctx.decodeAudioData(await latestRecording.arrayBuffer());
-    const wav=wavFromAudioBuffer(buffer);
-    if(wavUrl)URL.revokeObjectURL(wavUrl);
-    wavUrl=URL.createObjectURL(wav);
-    const link=document.createElement('a');
-    link.href=wavUrl;link.download='RecREdA-'+new Date().toISOString().slice(0,10)+'.wav';
-    document.body.appendChild(link);link.click();link.remove();
-    message('WAV descargado: PCM de 16 bits. Para compartir por internet, el formato original ocupa menos.');
-  }catch(err){
-    message('Este navegador no pudo convertir la grabación a WAV. Descarga el archivo original y ábrelo con Audacity. '+err.message);
-  }finally{button.disabled=false;button.textContent='↓ Descargar WAV'}
-});
+
 $('stop-record').addEventListener('click',()=>{if(recorder?.state==='recording'){logEvent('Fin de grabación');recorder.stop()}clearInterval(timerHandle);$('mark').disabled=true;$('record').disabled=false;$('stop-record').disabled=true;document.body.classList.remove('recording');$('status-label').textContent=micStream?'Micrófono activo':'Estudio preparado'});
 $('mark').addEventListener('click',()=>logEvent('Marcador manual'));
 $('download-log').addEventListener('click',()=>{const content=logEntries.map(e=>e.time+'\t'+e.label).join('\n');const url=URL.createObjectURL(new Blob(['Tiempo\tEvento\n'+content],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='RecREdA-registro.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),500)});
