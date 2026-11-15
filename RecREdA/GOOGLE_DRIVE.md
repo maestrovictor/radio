@@ -34,6 +34,12 @@ window.RECREDA_GOOGLE_CLIENT_ID = 'TU_ID_PUBLICO.apps.googleusercontent.com';
 
 La aplicación no conserva los tokens en localStorage ni en el repositorio. El proceso solo se inicia al pulsar el botón de Drive.
 
+## Compartir el programa en Google Classroom
+
+1. Tras guardar el MP3 en Drive, pulsa **Compartir en Google Classroom**.
+2. Elige la clase y confirma la publicación en Classroom. RecREdA le pasa el enlace del MP3. Los permisos del archivo se gestionan en Drive. Comprueba que la clase tenga acceso antes de publicar.
+3. Para usar la descarga local, pulsa **Descargar MP3** y después **Abrir Google Classroom**. En la clase, adjunta el MP3 descargado al anuncio, material o tarea.
+
 ## Limitaciones y prevención
 
 - **Google Workspace educativo:** un administrador puede bloquear aplicaciones OAuth externas; se debe autorizar desde la consola de administración cuando corresponda.

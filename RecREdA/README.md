@@ -6,6 +6,7 @@
 
 - **Nueva interfaz** de cabina, con indicador de grabación, pads diferenciados por color y controles accesibles en ordenador y móvil.
 - **Descarga MP3 en local o guardado privado en Google Drive**: siempre es una elección del usuario. La descarga MP3 funciona sin cuenta; Drive exige habilitar OAuth de Google Cloud (ver [GOOGLE_DRIVE.md](./GOOGLE_DRIVE.md)).
+- **Google Classroom** permite compartir el enlace del MP3 guardado en Drive o abrir la clase para adjuntar el MP3 descargado. El docente confirma la publicación en Classroom.
 - **Descarga WAV (PCM 16 bits)** generada localmente en el navegador desde la grabación. Ideal para editar en Audacity u otros programas. **Importante:** ocupa bastante más espacio que WebM/M4A.
 - Descarga alternativa del archivo original (generalmente WebM/Opus en Firefox/Chrome o M4A en Safari, dependiendo del navegador).
 - Banco A: 8 efectos (teclas A–H); Banco B: 8 sintonías sintetizadas (teclas 1–8), reemplazables por archivos locales.
@@ -32,7 +33,7 @@ Consultar [PRUEBAS.md](./PRUEBAS.md) para las pruebas de audio con micrófono re
 
 ## Privacidad
 
-No hay servicio de almacenamiento ni autenticación. Los audios se procesan localmente. El navegador solicita permiso para el micrófono. El guion se guarda en localStorage del propio navegador.
+Los audios se procesan en el navegador. Google Drive requiere autorización y recibe el MP3 solo al elegir guardarlo allí. La opción de Classroom comparte el enlace del archivo. El navegador solicita permiso para el micrófono. El guion se guarda en localStorage del propio navegador.
 
 ## Formatos
 
@@ -50,7 +51,7 @@ La conversión WAV usa `AudioContext.decodeAudioData`. Si un navegador no puede 
 ## Limitaciones
 
 - Una sola entrada de micrófono reconocida por el sistema (puede ser una mesa con varias voces premezcladas por USB).
-- Aún no se incluyen pistas independientes, edición, auto-ducking ni publicación.
+- Aún no se incluyen pistas independientes, edición, auto-ducking ni publicación automática.
 - Los archivos cargados en pads no persisten entre sesiones; guion sí.
 - Descargar la grabación antes de cerrar la página.
 - Google Drive requiere configurar OAuth, habilitar Google Drive API y en entornos educativos puede requerir la autorización del administrador de Google Workspace.

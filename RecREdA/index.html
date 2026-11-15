@@ -113,7 +113,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{
 .tag{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:1.6px}
 audio{width:100%;margin-top:12px;min-height:45px}
 .download-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.download-actions .button{font-size:12px;min-height:48px}#drive-feedback a{color:var(--accent);font-weight:750}
+.download-actions .button{font-size:12px;min-height:48px}
+.classroom-action{grid-column:1/-1}
+#drive-feedback a{color:var(--accent);font-weight:750}
 .notice{color:#b8c5d5;line-height:1.55;font-size:12px;margin:15px 0 0}
 .notice strong{color:#f0f4f6}
 .scripts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
@@ -147,7 +149,21 @@ audio{width:100%;margin-top:12px;min-height:45px}
  <div class="fader"><div class="fader-head"><label for="pad-volume">🎵 Música y efectos</label><span id="pad-percent" class="small">70%</span></div><input id="pad-volume" class="range" type="range" min="0" max="100" value="70"></div>
  <div class="recordbar"><div><div class="small">Tiempo de grabación</div><div class="timer" id="timer">00:00</div></div><div class="row"><button id="record" class="button danger">● Grabar</button><button id="stop-record" class="button" disabled>■ Parar</button></div></div>
  <div class="row" style="margin-bottom:14px"><button id="mark" class="button" disabled>⚑ Añadir marcador</button><span class="small">Señala entrevistas, noticias y secciones</span></div><div id="alert" role="status" aria-live="polite"></div>
- <div id="record-result" hidden><div class="tag">TU PROGRAMA ESTÁ LISTO</div><audio id="playback" controls></audio><div class="download-actions"><button id="download-mp3" class="button primary" type="button">↓ Descargar MP3</button><button id="drive-mp3" class="button" type="button">☁ Guardar MP3 en Drive</button><button id="download-wav" class="button" type="button">↓ Descargar WAV</button><a id="download" class="button" download="RecREdA-grabacion.webm">↓ Archivo original</a></div><p class="notice">Tú eliges: descarga local o guarda una copia privada en tu Google Drive, cuando autorices tu cuenta. El WAV es más pesado; el MP3 está comprimido.</p><p id="drive-feedback" class="notice" aria-live="polite"></p></div>
+ <div id="record-result" hidden>
+  <div class="tag">TU PROGRAMA ESTÁ LISTO</div>
+  <audio id="playback" controls></audio>
+  <div class="download-actions">
+   <button id="download-mp3" class="button primary" type="button">↓ Descargar MP3</button>
+   <button id="drive-mp3" class="button" type="button">☁ Guardar MP3 en Drive</button>
+   <button id="download-wav" class="button" type="button">↓ Descargar WAV</button>
+   <a id="download" class="button" download="RecREdA-grabacion.webm">↓ Archivo original</a>
+   <a id="classroom-open" class="button classroom-action" href="https://classroom.google.com/" target="_blank" rel="noopener noreferrer" aria-describedby="classroom-local-help">Abrir Google Classroom</a>
+   <a id="classroom-share" class="button classroom-action" target="_blank" rel="noopener noreferrer" aria-describedby="classroom-drive-help" hidden>Compartir en Google Classroom</a>
+  </div>
+  <p id="classroom-local-help" class="notice">Descarga el MP3 y adjúntalo desde Classroom. Si lo guardas en Drive, podrás compartir su enlace.</p>
+  <p id="classroom-drive-help" class="notice" hidden>Elige la clase y confirma la publicación en Classroom. Comprueba en Drive que la clase tenga acceso al MP3.</p>
+  <p id="drive-feedback" class="notice" aria-live="polite"></p>
+ </div>
  <div class="notice">La grabación mezcla el micrófono y los efectos en tu navegador. Solo se sube a Google Drive si eliges esa opción y autorizas el acceso. Para usar el micrófono se necesita HTTPS o localhost.</div>
 </aside>
 <div class="scripts">
@@ -216,7 +232,7 @@ $('audio-upload').addEventListener('change',async e=>{const f=e.target.files?.[0
 $('stop-sounds').addEventListener('click',()=>{for(const s of [...activeSounds])try{s.stop()}catch(e){}activeSounds.clear();musicInstances.clear();logEvent('Detener sonidos');document.querySelectorAll('.pad').forEach(x=>{x.classList.remove('playing');x.setAttribute('aria-pressed','false')})});
 function startMeter(){const data=new Uint8Array(analyser.frequencyBinCount);function draw(){if(!ctx)return;analyser.getByteTimeDomainData(data);let s=0;for(const v of data){const n=(v-128)/128;s+=n*n}const level=Math.min(100,Math.sqrt(s/data.length)*240);$('mic-meter').style.width=level+'%';[...$('visualizer').children].forEach((el,i)=>el.style.height=(5+Math.min(30,level*(.2+Math.random()*.55)))+'px');requestAnimationFrame(draw)}draw()}
 function formatTime(sec){const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')}
-$('record').addEventListener('click',async()=>{try{await initAudio();if(!window.MediaRecorder)throw Error('Este navegador no admite MediaRecorder');const types=['audio/webm;codecs=opus','audio/webm','audio/mp4'];const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';chunks=[];recorder=new MediaRecorder(destination.stream,mime?{mimeType:mime}:undefined);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onerror=()=>message('Error durante la grabación.');recorder.onstop=()=>{const type=recorder.mimeType||'audio/webm',ext=type.includes('mp4')?'m4a':'webm',blob=new Blob(chunks,{type});latestRecording=blob;mp3Cache=null;mp3Promise=null;$('drive-feedback').textContent='';if(lastUrl)URL.revokeObjectURL(lastUrl);if(wavUrl){URL.revokeObjectURL(wavUrl);wavUrl=null}lastUrl=URL.createObjectURL(blob);$('playback').src=lastUrl;$('download').href=lastUrl;$('download').download='RecREdA-'+new Date().toISOString().slice(0,10)+'.'+ext;$('download-wav').disabled=false;$('download-wav').textContent='↓ Descargar WAV';$('download-mp3').disabled=false;$('drive-mp3').disabled=false;$('record-result').hidden=false;message('Grabación lista. Puedes descargarla como WAV o en su formato original.')};recorder.start(1000);startedAt=Date.now();logEntries=[];logEvent('Inicio de grabación');$('mark').disabled=false;timerHandle=setInterval(()=>$('timer').textContent=formatTime(Math.floor((Date.now()-startedAt)/1000)),250);$('record').disabled=true;$('stop-record').disabled=false;document.body.classList.add('recording');$('status-label').textContent='Grabando programa';message('Grabando... Los sonidos también se incluyen en el archivo.')}catch(e){message('No se pudo iniciar la grabación: '+e.message)}});
+$('record').addEventListener('click',async()=>{try{await initAudio();if(!window.MediaRecorder)throw Error('Este navegador no admite MediaRecorder');const types=['audio/webm;codecs=opus','audio/webm','audio/mp4'];const mime=types.find(t=>MediaRecorder.isTypeSupported(t))||'';chunks=[];recorder=new MediaRecorder(destination.stream,mime?{mimeType:mime}:undefined);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onerror=()=>message('Error durante la grabación.');recorder.onstop=()=>{const type=recorder.mimeType||'audio/webm',ext=type.includes('mp4')?'m4a':'webm',blob=new Blob(chunks,{type});latestRecording=blob;mp3Cache=null;mp3Promise=null;$('drive-feedback').textContent='';setClassroomFile(null);if(lastUrl)URL.revokeObjectURL(lastUrl);if(wavUrl){URL.revokeObjectURL(wavUrl);wavUrl=null}lastUrl=URL.createObjectURL(blob);$('playback').src=lastUrl;$('download').href=lastUrl;$('download').download='RecREdA-'+new Date().toISOString().slice(0,10)+'.'+ext;$('download-wav').disabled=false;$('download-wav').textContent='↓ Descargar WAV';$('download-mp3').disabled=false;$('drive-mp3').disabled=false;$('drive-mp3').textContent='☁ Guardar MP3 en Drive';$('record-result').hidden=false;message('Grabación lista. Puedes descargar el MP3 o guardarlo en Drive.')};recorder.start(1000);startedAt=Date.now();logEntries=[];logEvent('Inicio de grabación');$('mark').disabled=false;timerHandle=setInterval(()=>$('timer').textContent=formatTime(Math.floor((Date.now()-startedAt)/1000)),250);$('record').disabled=true;$('stop-record').disabled=false;document.body.classList.add('recording');$('status-label').textContent='Grabando programa';message('Grabando... Los sonidos también se incluyen en el archivo.')}catch(e){message('No se pudo iniciar la grabación: '+e.message)}});
 // WAV PCM de 16 bits: conversión local sin servicios de terceros.
 function wavFromAudioBuffer(buffer){
   const channels=Math.min(buffer.numberOfChannels,2),rate=buffer.sampleRate,frames=buffer.length;
@@ -299,6 +315,20 @@ function downloadBlob(blob,filename){
   setTimeout(()=>URL.revokeObjectURL(href),60000);
 }
 const mp3Filename=()=> 'RecREdA-'+new Date().toISOString().slice(0,10)+'.mp3';
+function setClassroomFile(driveFileUrl){
+  const shareLink=$('classroom-share');
+  if(driveFileUrl){
+    const shareUrl=new URL('https://classroom.google.com/share');
+    shareUrl.searchParams.set('url',driveFileUrl);
+    shareLink.href=shareUrl.href;
+  }else{
+    shareLink.removeAttribute('href');
+  }
+  shareLink.hidden=!driveFileUrl;
+  $('classroom-drive-help').hidden=!driveFileUrl;
+  $('classroom-open').hidden=Boolean(driveFileUrl);
+  $('classroom-local-help').hidden=Boolean(driveFileUrl);
+}
 $('download-mp3').addEventListener('click',async()=>{
   const button=$('download-mp3');
   button.disabled=true;button.textContent='Preparando MP3…';
@@ -356,23 +386,33 @@ $('drive-mp3').addEventListener('click',async()=>{
     return;
   }
   // Request authorization on the click itself to avoid browser popup blockers.
+  const recording=latestRecording;
   let tokenPromise;
   try{tokenPromise=authorizeDrive(clientId)}catch(err){message(err.message);return}
   button.disabled=true;button.textContent='Guardando en Drive…';
   try{
     const [token,blob]=await Promise.all([tokenPromise,getMp3()]);
+    if(recording!==latestRecording)return;
     $('drive-feedback').textContent='Subiendo archivo privado a tu Google Drive…';
     const uploaded=await uploadDriveMp3(blob,mp3Filename(),token);
+    if(recording!==latestRecording)return;
     if(!uploaded.id)throw new Error('La respuesta de Drive no incluye identificador.');
     const link=document.createElement('a');
     link.href='https://drive.google.com/file/d/'+encodeURIComponent(uploaded.id)+'/view';
     link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir archivo en tu Google Drive';
     $('drive-feedback').replaceChildren(document.createTextNode('MP3 guardado en tu Drive. '),link);
+    setClassroomFile(link.href);
     message('Archivo MP3 guardado en Drive correctamente. No se ha compartido públicamente.');
   }catch(err){
+    if(recording!==latestRecording)return;
     $('drive-feedback').textContent='No se ha confirmado la subida. '+err.message+' Puedes descargar el MP3 localmente.';
     message('No se pudo guardar en Drive: '+err.message);
-  }finally{button.disabled=false;button.textContent='☁ Guardar MP3 en Drive'}
+  }finally{
+    if(recording===latestRecording){
+      button.disabled=false;
+      button.textContent='☁ Guardar MP3 en Drive';
+    }
+  }
 });
 
 
